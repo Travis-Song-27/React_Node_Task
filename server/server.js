@@ -1,11 +1,6 @@
-// import cors from "cors";
-// import connectDB from "./db/index.js";
-// import userRouter from "./routers/users.js";
-// import productRouter from "./routers/products.js";
-// import {} from "dotenv/config";
-
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -15,31 +10,63 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-let tasks = [];
+const DATA_FILE = './tasks.json'
 
-// app.use("/api", userRouter);
-// app.use("/api", productRouter);
+// Read the data from DATA_FILE
+const readTasks = () => {
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([]))
+    }
+    const rawData = fs.readFileSync(DATA_FILE);
+    return JSON.parse(rawData);
+}
+
+// Write Tasks from DATA_FIlE
+const writeTasks = (tasks) => {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
+}
+
 
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  res.send("Hello world");
 });
 
-// 1. POST  - Add a new task
-app.post("/todoList", (req, res) => {
+
+// 1. GET - get all tasks;
+app.get("/api/tasks", (req, res) => {
+  try {
+    const tasks = readTasks();
+    res.json(tasks);
+    res.status(201).json({success: true, message: "all tasks get"});
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+})
+
+
+// 2. POST  - Add a new task
+app.post("/api/tasks", (req, res) => {
     try {
-      const { content, globalId } = req.body;
-        if (!content) {
-            return res.status(400).json({success: false, error: "task title is required"});
-        }
-        else {
-            const newTask = {
-                id: globalId,
-                content,
-                completed: false
-            }
-            tasks.push(newTask),
-            res.status(201).json({success: true, message: "New task added with" + newTask.content});
-        }
+      const { content, id } = req.body;
+      if (!content) {
+        console.log("No content uploaded here");
+        return res.status(400).json({success: false, error: "task title is required"});
+      }
+      
+      const tasks = readTasks();
+      const newTask = {
+        id: id,
+        content: content,
+        completed: false
+      }
+
+      tasks.push(newTask);
+
+      writeTasks(tasks);
+
+      res.status(201).json({success: true, message: "New task added with: " + newTask.content});
+
     } catch (err) {
         console.log(err.message);
         res.status(500).json({ success: false, message: "Server Error" });
@@ -47,27 +74,28 @@ app.post("/todoList", (req, res) => {
     
 })
 
-// 2. GET - Retrieve all tasks
-app.get("/todoList", (req, res) => {
-    res.status(200).json(tasks.length ? tasks : "No element in tasks")
-})
 
 // 3. PUT - Update a task by ID
-app.put("/todoList/:id", (req, res) => {
+app.put("/api/tasks/:id", (req, res) => {
     try {
-        const taskId = parseInt(req.params.id);
+        const taskId = parseInt(req.params.id, 10);
         const {content, completed} = req.body;
 
-        const task = tasks.find((task) => task.id === taskId);
+        const tasks = readTasks();
+
+        const taskIndex = tasks.findIndex((task) => task.id === parseInt(taskId, 10));
         
-        if (!task) {
+        if (taskIndex === -1) {
             return res.status(404).json({error: "Task not found"});
         }
 
-        if (content) task.content = content;
-        if (completed !== undefined) task.completed = completed;
+        if (content !== "N/A") tasks[taskIndex].content = content;
+        if (completed !== "N/A") tasks[taskIndex].completed = completed;
+
+        writeTasks(tasks);
 
         res.status(200).json({success: true, message: `Task with id: ${taskId} is updated`});
+
     } catch(err) {
         console.log(err.message);
         res.status(500).json({success: false, message: "Server Error"});
@@ -75,8 +103,10 @@ app.put("/todoList/:id", (req, res) => {
 })
 
 // 4. DELETE - Delete a task by ID
-app.delete("/todoList/:id", (req, res) => {
+app.delete("/api/tasks/:id", (req, res) => {
     try {
+        const tasks = readTasks();
+
         const taskId = parseInt(req.params.id);
         const taskIndex = tasks.findIndex((task) => task.id === taskId);
 
@@ -85,7 +115,10 @@ app.delete("/todoList/:id", (req, res) => {
         }
 
         tasks.splice(taskIndex, 1);
-        res.status(200).json();
+
+        writeTasks(tasks);
+
+        res.status(200).json({success: true, message: `The task with id ${taskId} is deleted.`});
     } catch (err) {
         console.log(err.message);
         res.status(500).json({success: false, message: "Server Error"});
