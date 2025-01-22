@@ -2,49 +2,16 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Paper, TextField, Checkbox, Button }  from '@mui/material';
 import { useState, useEffect } from 'react';
 
+const URL = "http://localhost:5000"
 
 function TodoList() {
     const [rows, setRows] = useState([]);
     const [isEdit, setIsEdit] = useState(false);
     const [newTask, setNewTask] = useState("");
-    const [globalId, setGlobalId] = useState(4);
     const [editingId, setEditingId] = useState(-1);
 
-
-
-    useEffect(() => {
-      const controller = new AbortController();
-      const signal = controller.signal;
-
-      const fetchRows = async () => {
-        try {
-          const res = await fetch("http://localhost:5000/api/tasks", {
-            method: "GET",
-            signal: signal
-          });
-          const data = await res.json()
-          setRows(data);
-        } catch (e) {
-          if (e.name === "AbortError") {
-            console.log("Fetch aborted");
-          } else {
-            console.error("There is an error caught in raw rows data fetching:", e);
-          }     
-        }
-      }
-
-      fetchRows();
-
-      return () => {
-        controller.abort();
-      }
-
-    }, [])
-
-
-
     const columns = [
-        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'id', headerName: 'ID', width: 150, valueFormatter: (params) => params.value},
         { field: 'content', headerName: 'Task Name', width: 300 },
         {
           field: 'completed',
@@ -91,9 +58,169 @@ function TodoList() {
     ];
 
 
+
+    // 1. Get all the data
+
+
+    useEffect(() => {
+      const controller = new AbortController();
+      const signal = controller.signal;
+
+      const fetchRows = async () => {
+        try {
+          const res = await fetch(`${URL}/api/tasks`, {
+            method: "GET",
+            signal: signal
+          });
+          const data = await res.json()
+          setRows(data);
+        } catch (e) {
+          if (e.name === "AbortError") {
+            console.log("Fetch aborted");
+          } else {
+            console.error("There is an error caught in raw rows data fetching:", e);
+          }     
+        }
+      }
+
+      fetchRows();
+
+      return () => {
+        controller.abort();
+      }
+
+    }, [])
+
+
+    /*
+
+    useEffect(() => {
+      const controller = new AbortController(); 
+      const signal = controller.signal;
+    
+      const fetchRows = async () => {
+        try {
+          const res = await fetch(`${URL}/tasks`, { 
+            method: "GET",
+            signal: signal, 
+          });
+    
+          if (!res.ok) {
+            throw new Error(`Failed to fetch tasks: ${res.status} ${res.statusText}`);
+          }
+    
+          const data = await res.json();
+          setRows(data); 
+        } catch (e) {
+          if (e.name === "AbortError") {
+            console.log("Fetch aborted");
+          } else {
+            console.error("Error fetching tasks:", e);
+          }
+        }
+      };
+    
+      fetchRows(); 
+      return () => {
+        controller.abort(); 
+      };
+    }, []); 
+    
+    */
+
+
+
+    // 2. Add the data
+
+    const postNewTask = async (content) => {
+      try {
+        const res = await fetch(`${URL}/api/tasks`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content })
+        });
+        console.log("POST: ", res);
+        return await res.json();
+      } catch (err) {
+        console.error("Failed to post new task:", err);
+        return "Failed";
+      }
+    }
+
+    const handleAddTask = async () => {
+      if (isValidTaskName(newTask)) {
+        const res = await postNewTask(newTask);
+
+        if (res !== "Failed") {
+          console.log(res);
+
+          setRows((prevData) => [...prevData, {id: res.unique_id, content: newTask, completed: false}]);
+          setNewTask("");
+        } else {
+          alert("Failed to add the task");
+        }
+
+      } else {
+        alert("The task is already there or the input was empty.")
+      }
+    }
+
+
+
+
+    /*
+
+    const postNewTask = async (content) => {
+      try {
+        const res = await fetch(`${URL}/tasks`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content }),
+        });
+    
+        if (!res.ok) {
+          throw new Error(`Failed to post new task: ${res.status} ${res.statusText}`);
+        }
+    
+        const data = await res.json(); 
+        console.log("POST Response:", data);
+        return data; 
+      } catch (err) {
+        console.error("Failed to post new task:", err);
+        return "Failed";
+      }
+    };
+
+
+    const handleAddTask = async () => {
+      if (isValidTaskName(newTask)) { 
+        const res = await postNewTask(newTask);
+    
+        if (res) { 
+          setRows((prevData) => [...prevData, res]);
+          setNewTask(""); 
+        } else {
+          alert("Failed to add the task");
+        }
+      } else {
+        alert("The task is already there or the input was empty.");
+      }
+    };
+
+
+    */
+
+
+    // 3. Modify the data
+
+
     const handleModifyChecked = async (content, completed, id) => {
       try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+        const res = await fetch(`${URL}/api/tasks/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -136,77 +263,10 @@ function TodoList() {
     }
 
 
-    const deleteTask = async (id) => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${id}`, {
-          method: "DELETE"
-        })
-        return await res.json();
-      } catch (err) {
-        console.error("Failed to detele the task:", err);
-        return "Failed";
-      }
-    }
-
-    const handleDelete = async (id) => {
-      const res = await deleteTask(id);
-      if (res !== "Failed") {
-        setRows((prevData) => 
-          prevData.filter((row) => row.id !== id)
-        )
-      } else {
-        alert("Failed to delete a task");
-      }
- 
-    }
-
-
-
-
-
-
-    const postNewTask = async (content, id) => {
-      try {
-        const res = await fetch("http://localhost:5000/api/tasks", {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content, id })
-        });
-        console.log("POST: ", res);
-        return await res.json();
-      } catch (err) {
-        console.error("Failed to post new task:", err);
-        return "Failed";
-      }
-    }
-
-    const handleAddTask = async () => {
-      if (isValidTaskName(newTask)) {
-        const res = await postNewTask(newTask, globalId);
-
-        if (res !== "Failed") {
-          console.log(res);
-
-          setRows((prevData) => [...prevData, {id: globalId, content: newTask, completed: false}]);
-          setGlobalId((prevId) => prevId + 1)
-          setNewTask("");
-        } else {
-          alert("Failed to add the task");
-        }
-
-      } else {
-        alert("The task is already there or the input was empty.")
-      }
-    }
-
-    
-
 
     const handleModifyTask = async (content, completed) => {
       try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${editingId}`, {
+        const res = await fetch(`${URL}/api/tasks/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -251,14 +311,38 @@ function TodoList() {
 
 
 
+    // 4. delete the data
+
+    const deleteTask = async (id) => {
+      try {
+        const res = await fetch(`${URL}/api/tasks/${id}`, {
+          method: "DELETE"
+        })
+        return await res.json();
+      } catch (err) {
+        console.error("Failed to detele the task:", err);
+        return "Failed";
+      }
+    }
+
+    const handleDelete = async (id) => {
+      const res = await deleteTask(id);
+      if (res !== "Failed") {
+        setRows((prevData) => 
+          prevData.filter((row) => row.id !== id)
+        )
+      } else {
+        alert("Failed to delete a task");
+      }
+ 
+    }
+
+  
+
+
     const isValidTaskName = (task) => {
         return task && !rows.some((row) => row.content === task);
     }
-
-
-
-
-    
 
     const paginationModel = { page: 0, pageSize: 5 };
 
