@@ -11,7 +11,7 @@ function TodoList() {
     const [editingId, setEditingId] = useState(-1);
 
     const columns = [
-        { field: 'id', headerName: 'ID', width: 150, valueFormatter: (params) => params.value},
+        { field: 'task_id', headerName: 'ID', width: 150},
         { field: 'content', headerName: 'Task Name', width: 300 },
         {
           field: 'completed',
@@ -21,7 +21,7 @@ function TodoList() {
             <Checkbox
               disabled={isEdit}
               checked={params.row.completed}
-              onChange={() => handleCheckboxChange(params.row.id)}
+              onChange={() => handleCheckboxChange(params.row.task_id)}
             />
           ),
         },
@@ -49,7 +49,7 @@ function TodoList() {
               variant="contained"
               color="primary"
               disabled={isEdit}
-              onClick={() => handleDelete(params.row.id)}
+              onClick={() => handleDelete(params.row.task_id)}
             >
               Delete
             </Button>
@@ -72,8 +72,9 @@ function TodoList() {
             method: "GET",
             signal: signal
           });
-          const data = await res.json()
-          setRows(data);
+          const data = await res.json();
+          console.log(data.tasks);
+          setRows(data.tasks);
         } catch (e) {
           if (e.name === "AbortError") {
             console.log("Fetch aborted");
@@ -156,7 +157,7 @@ function TodoList() {
         if (res !== "Failed") {
           console.log(res);
 
-          setRows((prevData) => [...prevData, {id: res.unique_id, content: newTask, completed: false}]);
+          setRows((prevData) => [...prevData, {task_id: res.unique_id, content: newTask, completed: false}]);
           setNewTask("");
         } else {
           alert("Failed to add the task");
@@ -240,13 +241,13 @@ function TodoList() {
     }
     
     const handleCheckboxChange = async (id) => {
-      const item = rows.find((row) => row.id === id);
-      const res = await handleModifyChecked("N/A", !item.completed, item.id);
+      const item = rows.find((row) => row.task_id === id);
+      const res = await handleModifyChecked("N/A", !item.completed, item.task_id);
 
       if (res !== "Failed") {
         setRows((prevData) =>
           prevData.map((row) =>
-              row.id === id ? {...row, completed: !row.completed} : row
+              row.task_id === id ? {...row, completed: !row.completed} : row
           )
         );
       } else {
@@ -259,7 +260,7 @@ function TodoList() {
     const handleEdit = (row) => {
         setIsEdit(true);
         setNewTask(row.content);
-        setEditingId(row.id);
+        setEditingId(row.task_id);
     }
 
 
@@ -295,7 +296,7 @@ function TodoList() {
 
           setRows((prevData) => 
             prevData.map((row) => 
-              row.id === editingId ? {...row, content: newTask} : row
+              row.task_id === editingId ? {...row, content: newTask} : row
             )
           );
           setNewTask("");
@@ -329,7 +330,7 @@ function TodoList() {
       const res = await deleteTask(id);
       if (res !== "Failed") {
         setRows((prevData) => 
-          prevData.filter((row) => row.id !== id)
+          prevData.filter((row) => row.task_id !== id)
         )
       } else {
         alert("Failed to delete a task");
@@ -375,6 +376,7 @@ function TodoList() {
             initialState={{ pagination: { paginationModel } }}
             pageSizeOptions={[5, 10, 20]}
             sx={{ border: 0 }}
+            getRowId={(row) => row.task_id}
           />
         </Paper>
       </>

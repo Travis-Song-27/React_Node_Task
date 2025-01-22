@@ -1,37 +1,55 @@
 const express = require('express');
+
 const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
+
+// const { v4: uuidv4 } = require('uuid');
+
+const connectDB = require('./db/index');
+
+const taskRouter = require('./routers/task')
+
 const fs = require('fs');
+
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
-// // Connect to MongoDB
-// connectDB();
+
+// Connect to MongoDB
+connectDB();
 
 app.use(cors());
 app.use(express.json());
 
-const DATA_FILE = './tasks.json'
 
-// Read the data from DATA_FILE
-const readTasks = () => {
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify([]))
-    }
-    const rawData = fs.readFileSync(DATA_FILE);
-    return JSON.parse(rawData);
-}
 
-// Write Tasks from DATA_FIlE
-const writeTasks = (tasks) => {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
-}
+// const DATA_FILE = './tasks.json'
+
+// // Read the data from DATA_FILE
+// const readTasks = () => {
+//     if (!fs.existsSync(DATA_FILE)) {
+//       fs.writeFileSync(DATA_FILE, JSON.stringify([]))
+//     }
+//     const rawData = fs.readFileSync(DATA_FILE);
+//     return JSON.parse(rawData);
+// }
+
+// // Write Tasks from DATA_FIlE
+// const writeTasks = (tasks) => {
+//     fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
+// }
+
+
+app.use("/api", taskRouter);
 
 
 app.get("/", (req, res) => {
   res.send("Hello world");
 });
 
+
+
+/*
 
 // 1. GET - get all tasks;
 app.get("/api/tasks", (req, res) => {
@@ -125,6 +143,9 @@ app.delete("/api/tasks/:id", (req, res) => {
         res.status(500).json({success: false, message: "Server Error"});
     }
 })
+
+*/
+
 
 // app.use(cors({
 //   origin: 'http://localhost:5173', 
