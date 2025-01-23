@@ -14,30 +14,10 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-
-// Connect to MongoDB
 connectDB();
 
 app.use(cors());
 app.use(express.json());
-
-
-
-// const DATA_FILE = './tasks.json'
-
-// // Read the data from DATA_FILE
-// const readTasks = () => {
-//     if (!fs.existsSync(DATA_FILE)) {
-//       fs.writeFileSync(DATA_FILE, JSON.stringify([]))
-//     }
-//     const rawData = fs.readFileSync(DATA_FILE);
-//     return JSON.parse(rawData);
-// }
-
-// // Write Tasks from DATA_FIlE
-// const writeTasks = (tasks) => {
-//     fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
-// }
 
 
 app.use("/api", taskRouter);
@@ -48,8 +28,29 @@ app.get("/", (req, res) => {
 });
 
 
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+
 
 /*
+
+const DATA_FILE = './tasks.json'
+
+// Read the data from DATA_FILE
+const readTasks = () => {
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([]))
+    }
+    const rawData = fs.readFileSync(DATA_FILE);
+    return JSON.parse(rawData);
+}
+
+// Write Tasks from DATA_FIlE
+const writeTasks = (tasks) => {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2))
+}
 
 // 1. GET - get all tasks;
 app.get("/api/tasks", (req, res) => {
@@ -154,9 +155,6 @@ app.delete("/api/tasks/:id", (req, res) => {
 
 // app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
 
 
