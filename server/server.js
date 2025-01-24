@@ -6,7 +6,7 @@ const cors = require('cors');
 
 const connectDB = require('./db/index');
 
-const taskRouter = require('./routers/task')
+const userRouter = require('./routers/user')
 
 const fs = require('fs');
 
@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 
-app.use("/api", taskRouter);
+app.use("/api", userRouter);
 
 
 app.get("/", (req, res) => {

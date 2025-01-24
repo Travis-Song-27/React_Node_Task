@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid';
-import { Paper, TextField, Checkbox, Button }  from '@mui/material';
+import { Paper, TextField, Checkbox, Button, Typography }  from '@mui/material';
 import { useState, useEffect } from 'react';
 
 const URL = "http://localhost:5000"
@@ -73,8 +73,8 @@ function TodoList() {
             signal: signal
           });
           const data = await res.json();
-          console.log(data.formattedTasks);
-          setRows(data.formattedTasks);
+          console.log(data.tasks);
+          setRows(data.tasks);
         } catch (e) {
           if (e.name === "AbortError") {
             console.log("Fetch aborted");
@@ -346,7 +346,9 @@ function TodoList() {
 
     return (
       <>
-        <h1>TodoList</h1>
+        <Typography variant="h3" textAlign="center" mb={3}>
+          Todo List
+        </Typography>
         <TextField 
           id="input" 
           label="Input" 

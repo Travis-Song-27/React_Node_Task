@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from "react-router"
-import Home from "./home/Home"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router"
+import Login from "./home/Login"
 import TodoList from "./todoList/TodoList"
 import './App.css'
 
@@ -10,7 +10,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home/>} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login/>} />
         <Route path="/todoList" element={<TodoList/>} />
       </Routes>
     </BrowserRouter>
