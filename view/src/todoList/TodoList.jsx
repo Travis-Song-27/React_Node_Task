@@ -85,7 +85,7 @@ function TodoList() {
           renderCell: (params) => (
             <Button
               variant="contained"
-              color="primary"
+              color="error"
               disabled={isEdit}
               onClick={() => handleDelete(params.row._id)}
             >
@@ -405,7 +405,7 @@ function TodoList() {
     return (
       <>
         <Button
-          color="secondary"
+          color="info"
           variant="contained"
           onClick={handleLogOut}
           sx= {{position: "absolute", right: 20}}
@@ -421,20 +421,23 @@ function TodoList() {
           variant="outlined" 
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
+          sx={{ marginRight: 2 }}
         />
         {isEdit ? (
             <Button 
               variant="contained"
               onClick={handleEditTask}
+              sx = {{ height: 100 }}
             >Edit Task</Button>
           ) : (
             <Button 
               variant="contained"
               onClick={handleAddTask}
+              sx = {{ height: 55 }}
             >Add Task</Button>
           )
         }
-        <Paper sx={{ height: 400, width: '100%' }}>
+        <Paper sx={{ height: 400, width: '100%', marginTop: 2 }}>
           <DataGrid
             rows={rows}
             columns={columns}
