@@ -1,6 +1,7 @@
 import { DataGrid } from '@mui/x-data-grid';
 import { Paper, TextField, Checkbox, Button, Typography }  from '@mui/material';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 
 const URL = "http://localhost:5000"
 
@@ -9,6 +10,43 @@ function TodoList() {
     const [isEdit, setIsEdit] = useState(false);
     const [newTask, setNewTask] = useState("");
     const [editingId, setEditingId] = useState(-1);
+    const [token, setToken] = useState(null);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      const getToken = localStorage.getItem('token');
+      let expired;
+
+      const isTokenExpired = (tk) => {
+        if (!tk) return true;
+        try {
+          // Decode JWT payload (base64)
+          const payloadBase64 = tk.split(".")[1];
+          const decodedPayload = JSON.parse(atob(payloadBase64));
+
+          // Check expiration time
+          const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+          return decodedPayload.exp < currentTime; // true if expired
+        } catch (error) {
+          console.error("Error decoding token:", error);
+          return true; // Assume token is invalid if decoding fails
+        }
+      }
+
+      if (getToken) {
+        expired = isTokenExpired(getToken);
+
+        if (expired) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user_id')
+        }
+      }
+
+      if (!getToken || expired) {
+        navigate("/login"); 
+      }
+    }, [navigate]);
 
     const columns = [
         { field: '_id', headerName: 'ID', width: 150},
@@ -61,16 +99,22 @@ function TodoList() {
 
     // 1. Get all the data
 
-
     useEffect(() => {
       const controller = new AbortController();
       const signal = controller.signal;
+
+      const now_token = localStorage.getItem('token');
+
+      console.log("The initial token", now_token);
 
       const fetchRows = async () => {
         try {
           const res = await fetch(`${URL}/api/tasks`, {
             method: "GET",
-            signal: signal
+            signal: signal,
+            headers: {
+              Authorization: `Bearer ${now_token}`,
+            }
           });
           const data = await res.json();
           console.log(data.tasks);
@@ -85,6 +129,8 @@ function TodoList() {
       }
 
       fetchRows();
+      
+      setToken(localStorage.getItem('token'));
 
       return () => {
         controller.abort();
@@ -138,7 +184,8 @@ function TodoList() {
         const res = await fetch(`${URL}/api/tasks`, {
           method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ content })
         });
@@ -224,6 +271,7 @@ function TodoList() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ content, completed })
         })
@@ -270,6 +318,7 @@ function TodoList() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ content, completed })
         })
@@ -316,7 +365,10 @@ function TodoList() {
     const deleteTask = async (id) => {
       try {
         const res = await fetch(`${URL}/api/tasks/${id}`, {
-          method: "DELETE"
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         })
         return await res.json();
       } catch (err) {
@@ -344,8 +396,22 @@ function TodoList() {
 
     const paginationModel = { page: 0, pageSize: 5 };
 
+    const handleLogOut = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem("user_id");
+      navigate('/login');
+    }
+
     return (
       <>
+        <Button
+          color="secondary"
+          variant="contained"
+          onClick={handleLogOut}
+          sx= {{position: "absolute", right: 20}}
+        >
+          Log out
+        </Button>
         <Typography variant="h3" textAlign="center" mb={3}>
           Todo List
         </Typography>

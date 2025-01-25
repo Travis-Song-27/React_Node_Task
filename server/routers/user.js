@@ -1,15 +1,17 @@
 const Router = require('express');
-const { getAllTasks, createNewTask, updateATask, deleteATask } = require('../controllers/user');
+const { userSignIn, getAllTasks, createNewTask, updateATask, deleteATask } = require('../controllers/user');
+const userAuth = require('../middleware/auth')
 
 const userRouter = Router();
 
-userRouter.get("/tasks", getAllTasks);
+userRouter.post("/login", userSignIn);
 
-userRouter.post("/tasks", createNewTask);
+userRouter.get("/tasks", userAuth, getAllTasks);
 
-userRouter.put("/tasks/:id", updateATask);
+userRouter.post("/tasks", userAuth, createNewTask);
 
-userRouter.delete("/tasks/:id", deleteATask);
+userRouter.put("/tasks/:id", userAuth, updateATask);
 
+userRouter.delete("/tasks/:id", userAuth, deleteATask);
 
-module.exports = userRouter
+module.exports = userRouter;

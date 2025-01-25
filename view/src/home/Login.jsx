@@ -1,13 +1,56 @@
 import React from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
+
+const URL = "http://localhost:5000";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    
+  const navigate = useNavigate();
+
+  const signInConnection = async (username, password) => {
+    try {
+      const res = await fetch(`${URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+
+      if (!res.ok) { 
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      return await res.json();
+
+    } catch (err) {
+      console.error("There is an error caught in login: ", err);
+      return "Failed";
+    }
+  }
+
+  const handleLogin = async (username, password) => {
+    const res = await signInConnection(username, password);
+
+    console.log(res);
+
+    if (res !== "Failed") {
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user_id', res.user_id);
+      console.log('Information is set on localStorage.');
+
+      // Set initial State
+
+
+      navigate('/todoList');
+      
+    } else {
+      alert("Something went wrong when login in.")
+    }
   }
 
   return (
@@ -46,7 +89,7 @@ function Login() {
           variant="contained"
           color="primary"
           sx={{ marginTop: 2 }}
-          onClick={handleLogin}
+          onClick={() => handleLogin(username, password)}
         >
           Login
         </Button>

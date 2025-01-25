@@ -1,12 +1,51 @@
 const User = require('../models/User');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = "Valid User";
+
+const userSignIn = async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    console.log("No username or no password here");
+    return res.status(400).json({success: false, message: "Need username and password both"});
+  }
+
+  try {
+    const user = await User.findOne({username: username, password: password});
+    if (user) {
+      const payload = { content: `This is token of ${user._id}`, user_id: user._id };
+      const token = jwt.sign(payload, JWT_SECRET, {
+        expiresIn: "1h"
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Login Successful",
+        user_id: user._id,
+        token
+      });
+
+    } else {
+      console.log("The User is not valid.");
+      res.status(400).json({ success: false, message: "Invalid Credentials" });
+    }
+
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({success: false, message: "Server Error: \n" + err.message})
+  }
+}
 
 const getAllTasks = async (req, res) => {
-  try {
-    // const user = await User.findById(req.user.id);
-    const user_name = "example1@gmail.com";
-    const user = await User.findOne({username: user_name});
+  const { userID } = req.body;
+  if (!userID) {
+    console.log("Cannot find userID to fetch the initial data");
+    return res.status(400).json({success: false, message: "Cannot find userID to fetch the initial data"});
+  }
 
+  try {
+    const user = await User.findById(userID);
     
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -24,7 +63,7 @@ const getAllTasks = async (req, res) => {
   
 
 const createNewTask = async (req, res) => {
-  const { content } = req.body;
+  const { content, userID } = req.body;
 
   if (!content) {
     console.log("No content uploaded here");
@@ -33,9 +72,7 @@ const createNewTask = async (req, res) => {
 
   try {
     // const user = await User.findById(req.user.id);
-    const user_name = "example1@gmail.com";
-    const user = await User.findOne({username: user_name});
-
+    const user = await User.findById(userID);
     
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -63,12 +100,10 @@ const createNewTask = async (req, res) => {
 
 const updateATask = async (req, res) => {
   const taskId = req.params?.id
-  const {content, completed} = req.body;
+  const {content, completed, userID} = req.body;
 
   try {
-    // const user = await User.findById(req.user.id);
-    const user_name = "example1@gmail.com";
-    const user = await User.findOne({username: user_name});
+    const user = await User.findById(userID);
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -101,11 +136,10 @@ const updateATask = async (req, res) => {
 
 const deleteATask = async (req, res) => {
   const taskId = req.params?.id;
+  const { userID } = req.body;
 
   try {
-    // const user = await User.findById(req.user.id);
-    const user_name = "example1@gmail.com";
-    const user = await User.findOne({username: user_name});
+    const user = await User.findById(userID);
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -126,4 +160,4 @@ const deleteATask = async (req, res) => {
   }
 }
 
-module.exports = { getAllTasks, createNewTask, updateATask, deleteATask };
+module.exports = { userSignIn, getAllTasks, createNewTask, updateATask, deleteATask };
