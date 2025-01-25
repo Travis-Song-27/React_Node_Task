@@ -3,6 +3,7 @@ import { Paper, TextField, Checkbox, Button, Typography }  from '@mui/material';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
+
 const URL = "http://localhost:5000"
 
 function TodoList() {
@@ -10,32 +11,31 @@ function TodoList() {
     const [isEdit, setIsEdit] = useState(false);
     const [newTask, setNewTask] = useState("");
     const [editingId, setEditingId] = useState(-1);
-    const [token, setToken] = useState(null);
 
     const navigate = useNavigate();
 
+    const token = localStorage.getItem('token');
+
+
     useEffect(() => {
-      const getToken = localStorage.getItem('token');
       let expired;
 
       const isTokenExpired = (tk) => {
         if (!tk) return true;
         try {
-          // Decode JWT payload (base64)
           const payloadBase64 = tk.split(".")[1];
           const decodedPayload = JSON.parse(atob(payloadBase64));
 
-          // Check expiration time
-          const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
-          return decodedPayload.exp < currentTime; // true if expired
+          const currentTime = Math.floor(Date.now() / 1000); 
+          return decodedPayload.exp < currentTime; 
         } catch (error) {
           console.error("Error decoding token:", error);
-          return true; // Assume token is invalid if decoding fails
+          return true; 
         }
       }
 
-      if (getToken) {
-        expired = isTokenExpired(getToken);
+      if (token) {
+        expired = isTokenExpired(token);
 
         if (expired) {
           localStorage.removeItem('token');
@@ -43,10 +43,11 @@ function TodoList() {
         }
       }
 
-      if (!getToken || expired) {
+      if (!token || expired) {
         navigate("/login"); 
       }
     }, [navigate]);
+
 
     const columns = [
         { field: '_id', headerName: 'ID', width: 150},
@@ -103,9 +104,7 @@ function TodoList() {
       const controller = new AbortController();
       const signal = controller.signal;
 
-      const now_token = localStorage.getItem('token');
-
-      console.log("The initial token", now_token);
+      console.log("The initial token", token);
 
       const fetchRows = async () => {
         try {
@@ -113,7 +112,7 @@ function TodoList() {
             method: "GET",
             signal: signal,
             headers: {
-              Authorization: `Bearer ${now_token}`,
+              Authorization: `Bearer ${token}`,
             }
           });
           const data = await res.json();
@@ -129,52 +128,12 @@ function TodoList() {
       }
 
       fetchRows();
-      
-      setToken(localStorage.getItem('token'));
 
       return () => {
         controller.abort();
       }
 
     }, [])
-
-
-    /*
-
-    useEffect(() => {
-      const controller = new AbortController(); 
-      const signal = controller.signal;
-    
-      const fetchRows = async () => {
-        try {
-          const res = await fetch(`${URL}/tasks`, { 
-            method: "GET",
-            signal: signal, 
-          });
-    
-          if (!res.ok) {
-            throw new Error(`Failed to fetch tasks: ${res.status} ${res.statusText}`);
-          }
-    
-          const data = await res.json();
-          setRows(data); 
-        } catch (e) {
-          if (e.name === "AbortError") {
-            console.log("Fetch aborted");
-          } else {
-            console.error("Error fetching tasks:", e);
-          }
-        }
-      };
-    
-      fetchRows(); 
-      return () => {
-        controller.abort(); 
-      };
-    }, []); 
-    
-    */
-
 
 
     // 2. Add the data
@@ -214,52 +173,6 @@ function TodoList() {
       }
     }
 
-
-
-
-    /*
-
-    const postNewTask = async (content) => {
-      try {
-        const res = await fetch(`${URL}/tasks`, {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content }),
-        });
-    
-        if (!res.ok) {
-          throw new Error(`Failed to post new task: ${res.status} ${res.statusText}`);
-        }
-    
-        const data = await res.json(); 
-        console.log("POST Response:", data);
-        return data; 
-      } catch (err) {
-        console.error("Failed to post new task:", err);
-        return "Failed";
-      }
-    };
-
-
-    const handleAddTask = async () => {
-      if (isValidTaskName(newTask)) { 
-        const res = await postNewTask(newTask);
-    
-        if (res) { 
-          setRows((prevData) => [...prevData, res]);
-          setNewTask(""); 
-        } else {
-          alert("Failed to add the task");
-        }
-      } else {
-        alert("The task is already there or the input was empty.");
-      }
-    };
-
-
-    */
 
 
     // 3. Modify the data
@@ -395,12 +308,13 @@ function TodoList() {
     }
 
     const paginationModel = { page: 0, pageSize: 5 };
-
+  
     const handleLogOut = () => {
       localStorage.removeItem('token');
       localStorage.removeItem("user_id");
       navigate('/login');
     }
+
 
     return (
       <>

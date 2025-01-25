@@ -1,21 +1,27 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from "react-router"
-import Login from "./home/Login"
+import { BrowserRouter, Routes, Route, Navigate, } from "react-router"
+import { createContext, useState } from 'react'
+import Login from "./login/Login"
 import TodoList from "./todoList/TodoList"
-import './App.css'
+import Home from "./home/Home"
+import './css/App.css'
+
+export const TokenContext = createContext(null);
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [token, setToken] = useState(null);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login/>} />
-        <Route path="/todoList" element={<TodoList/>} />
-      </Routes>
-    </BrowserRouter>
+    <TokenContext.Provider value={{token, setToken}}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home/>} />
+          <Route path="/login" element={<Login/>} />
+          <Route path="/home" element={<Home/>} />
+          <Route path="/todoList" element={<TodoList/>} />
+        </Routes>
+      </BrowserRouter>
+    </TokenContext.Provider>
   )
 }
 
-export default App
+export default App;

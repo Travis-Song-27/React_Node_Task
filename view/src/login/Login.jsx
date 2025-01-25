@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, TextField, Button, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 const URL = "http://localhost:5000";
@@ -11,6 +11,13 @@ function Login() {
 
   const navigate = useNavigate();
 
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      navigate('/home');
+    }
+  }, [])
+  
   const signInConnection = async (username, password) => {
     try {
       const res = await fetch(`${URL}/api/login`, {
@@ -21,15 +28,11 @@ function Login() {
         body: JSON.stringify({ username, password })
       })
 
-      if (!res.ok) { 
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
       return await res.json();
 
     } catch (err) {
       console.error("There is an error caught in login: ", err);
-      return "Failed";
+      return err;
     }
   }
 
@@ -38,18 +41,21 @@ function Login() {
 
     console.log(res);
 
-    if (res !== "Failed") {
+    if (res.success) {
       localStorage.setItem('token', res.token);
       localStorage.setItem('user_id', res.user_id);
       console.log('Information is set on localStorage.');
 
-      // Set initial State
-
-
-      navigate('/todoList');
-      
+      navigate('/home');
+     
     } else {
-      alert("Something went wrong when login in.")
+      if (res.message === "Invalid Credentials(not valid username or password)") {
+        alert("Invalid Credentials(not valid username or password)");
+      } else if (res.message === "Need username and password both") {
+        alert("You need to put in username and password");
+      } else {
+        alert("Something went wrong.")
+      }
     }
   }
 

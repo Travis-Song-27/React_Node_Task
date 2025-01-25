@@ -28,7 +28,7 @@ const userSignIn = async (req, res) => {
 
     } else {
       console.log("The User is not valid.");
-      res.status(400).json({ success: false, message: "Invalid Credentials" });
+      res.status(404).json({ success: false, message: "Invalid Credentials(not valid username or password)" });
     }
 
   } catch (err) {
